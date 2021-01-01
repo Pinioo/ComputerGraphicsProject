@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  
+  <div class="viewport"></div>
+
+  <script src="./three.min.js"></script>
+  <script src="./OBJLoader.js"></script>
+  <script src="./MTLLoader.js"></script>
+  <script src="./physi.js"></script>
+  <script>
+    let container;
+
+    let clock;
+
+    let camera, scene, renderer;
+
+    let mouseX = 0, mouseY = 0;
+
+    let windowHalfX = window.innerWidth / 2;
+    let windowHalfY = window.innerHeight / 2;
+
+    let plane, airplane, physicalAirplane;
+
+    init();
+    animate();
+
+
+    function init() {
+      clock = new THREE.Clock();
+
+      Physijs.scripts.worker = 'physijs_worker.js';
+      Physijs.scripts.ammo = 'ammo.js';
+
+      container = document.createElement( 'div' );
+      document.body.appendChild( container );
+
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+      camera.position.z = 2500;
+      camera.position.y = 600;
+
+      // scene
+
+      scene = new Physijs.Scene();
+      scene.setGravity(new THREE.Vector3( 0, -10, 0 ));
+      scene.addEventListener('update', function() {
+        scene.simulate(undefined, 2);
+      });
+
+      const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
+      scene.add( ambientLight );
+
+      const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
+      camera.add( pointLight );
+      scene.add( camera );
+
+      //// PLANE
+
+      var planeGeom = new THREE.PlaneGeometry(1000, 1000, 20, 20);
+      for ( var i = 0, l = planeGeom.vertices.length; i < l; i ++ ) {
+        var vertex = planeGeom.vertices[ i ];
+        vertex.x += Math.random() * 7 - 3;
+        vertex.y += Math.random() * 7 - 3;
+        vertex.z += Math.random() * 7 - 3;
+
+      }
+      plane = new Physijs.HeightfieldMesh(
+              planeGeom,
+              Physijs.createMaterial(
+                      new THREE.MeshLambertMaterial({
+                        color: 0xeeeeee
+                      }),
+                      .4,
+                      .5
+              ),
+              0
+      );
+
+      plane.rotation.x = -Math.PI / 2;
+      plane.position.y -= 50
+
+      scene.add(plane)
+
+      // manager
+
+      const objManager = new THREE.LoadingManager( loadModel );
+      const mtlManager = new THREE.LoadingManager( loadModel );
+
+      objManager.onProgress = function ( item, loaded, total ) {
+
+        console.log( item, loaded, total );
+
+      };
+
+      mtlManager.onProgress = function ( item, loaded, total ) {
+
+        console.log( item, loaded, total );
+
+      };
+
+      function loadModel() {}
+
+      function onProgress( xhr ) {}
+
+      function onError() {}
+
+      var mtlLoader = new THREE.MTLLoader(mtlManager);
+      mtlLoader.setPath('./models/');
+      mtlLoader.load('airplane.mtl', function (materials) {
+
+        materials.preload();
+
+        var objLoader = new THREE.OBJLoader(objManager);
+        objLoader.setMaterials(materials);
+        objLoader.setPath('./models/');
+        objLoader.load('airplane.obj', function (object) {
+
+          airplane = object
+          object.rotation.x -= Math.PI/2;
+          object.rotation.z -= Math.PI/2;
+          physicalAirplane = new Physijs.BoxMesh(
+                  object,
+                  // Physijs.createMaterial(
+                  //         materials.materials,
+                  //         0.4,
+                  //         0.4
+                  // ),
+                  Physijs.createMaterial(
+                          new THREE.MeshPhongMaterial({color: 0xaaaaaa}),
+                          0.4,
+                          0.4
+                  ),
+                  100
+          )
+          scene.add( physicalAirplane );
+
+        }, onProgress, onError);
+
+      }, onProgress, onError);
+
+      //
+
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      container.appendChild( renderer.domElement );
+
+      document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+      //
+
+      window.addEventListener( 'resize', onWindowResize, false );
+
+    }
+
+    function onWindowResize() {
+
+      windowHalfX = window.innerWidth / 2;
+      windowHalfY = window.innerHeight / 2;
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function onDocumentMouseMove( event ) {
+
+      mouseX = ( event.clientX - windowHalfX ) / 2;
+      mouseY = ( event.clientY - windowHalfY ) / 2;
+
+    }
+
+    //
+
+    function animate() {
+
+      requestAnimationFrame( animate );
+      render();
+
+    }
+
+    function render() {
+
+      camera.position.x += ( mouseX - camera.position.x ) * .05;
+      camera.position.y += 10 + ( - mouseY - camera.position.y ) * .05;
+
+      camera.lookAt(0, 100, 0);
+
+      renderer.render( scene, camera );
+
+    }
+  </script>
+</body>
+</html>
