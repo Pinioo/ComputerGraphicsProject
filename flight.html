@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title></title>
-  <link rel="stylesheet" href="/css/main.css" />
+  <title>Flight Simulator</title>
 </head>
 <body>
   
@@ -20,34 +19,36 @@
 
     let camera, scene, renderer;
 
-    let mouseX = 0, mouseY = 0;
-
     let windowHalfX = window.innerWidth / 2;
     let windowHalfY = window.innerHeight / 2;
 
-    let plane, airplane, physicalAirplane;
+    let plane, skybox
+    let physicalAirplane, wings
+
+    let airplaneInfo = {
+      flying: false,
+      steering: 0
+    }
 
     init();
+    scene.simulate(undefined, 2);
     animate();
 
 
     function init() {
       clock = new THREE.Clock();
 
-      Physijs.scripts.worker = 'physijs_worker.js';
-      Physijs.scripts.ammo = 'ammo.js';
+      Physijs.scripts.worker = './physijs_worker.js';
+      Physijs.scripts.ammo = './ammo.js';
 
       container = document.createElement( 'div' );
       document.body.appendChild( container );
 
-      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
-      camera.position.z = 2500;
-      camera.position.y = 600;
-
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 40000 );
       // scene
 
       scene = new Physijs.Scene();
-      scene.setGravity(new THREE.Vector3( 0, -10, 0 ));
+      scene.setGravity(new THREE.Vector3( 0, -100, 0 ));
       scene.addEventListener('update', function() {
         scene.simulate(undefined, 2);
       });
@@ -55,34 +56,40 @@
       const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
       scene.add( ambientLight );
 
-      const pointLight = new THREE.PointLight( 0xffffff, 0.8 );
-      camera.add( pointLight );
-      scene.add( camera );
+      const directLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directLight.position.set(0, 3000, 0)
+      directLight.lookAt(scene.position)
+      directLight.shadow.camera.far = 50000
+      scene.add(directLight)
+
+      scene.background = new THREE.CubeTextureLoader()
+              .setPath('./models/')
+              .load(["right.png", "left.png", "top.png", "bottom.png", "front.png", "back.png"])
+
+      scene.fog = new THREE.Fog(0xaaaaaa, 100, 20000)
 
       //// PLANE
 
-      var planeGeom = new THREE.PlaneGeometry(1000, 1000, 20, 20);
-      for ( var i = 0, l = planeGeom.vertices.length; i < l; i ++ ) {
-        var vertex = planeGeom.vertices[ i ];
-        vertex.x += Math.random() * 7 - 3;
-        vertex.y += Math.random() * 7 - 3;
-        vertex.z += Math.random() * 7 - 3;
-
-      }
-      plane = new Physijs.HeightfieldMesh(
+      const planeGeom = new THREE.PlaneGeometry(2000, 40000)
+      const planeTexture = new THREE.TextureLoader().setPath("./models/").load("road.png")
+      planeTexture.repeat = new THREE.Vector2(1, 20)
+      planeTexture.wrapT = true
+      plane = new Physijs.PlaneMesh(
               planeGeom,
               Physijs.createMaterial(
-                      new THREE.MeshLambertMaterial({
-                        color: 0xeeeeee
+                      new THREE.MeshPhongMaterial({
+                        map: planeTexture
                       }),
-                      .4,
-                      .5
+                      .8,
+                      .001
               ),
               0
       );
+      plane.receiveShadow = true
 
       plane.rotation.x = -Math.PI / 2;
-      plane.position.y -= 50
+      plane.position.y = -1000
+      plane.position.z = -17000
 
       scene.add(plane)
 
@@ -119,26 +126,45 @@
         objLoader.setMaterials(materials);
         objLoader.setPath('./models/');
         objLoader.load('airplane.obj', function (object) {
+          var a = object.children[0].geometry
+          a.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, -350))
 
-          airplane = object
-          object.rotation.x -= Math.PI/2;
-          object.rotation.z -= Math.PI/2;
+          var w = object.children[1].geometry
+          w.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, -350))
+
           physicalAirplane = new Physijs.BoxMesh(
-                  object,
-                  // Physijs.createMaterial(
-                  //         materials.materials,
-                  //         0.4,
-                  //         0.4
-                  // ),
+                  a,
                   Physijs.createMaterial(
-                          new THREE.MeshPhongMaterial({color: 0xaaaaaa}),
+                          materials.materials.airplane_body,
                           0.4,
-                          0.4
+                          0.00001
                   ),
-                  100
+                  10000
           )
-          scene.add( physicalAirplane );
+          physicalAirplane.castShadow = true
 
+          wings = new Physijs.BoxMesh(
+                  w,
+                  Physijs.createMaterial(
+                          materials.materials.airplane_wings,
+                          0.4,
+                          0.00001
+                  ),
+                  1000
+          )
+
+          physicalAirplane.add(wings);
+
+          camera.position.x = physicalAirplane.position.x;
+          camera.position.y = physicalAirplane.position.y - 3000;
+          camera.position.z = physicalAirplane.position.z + 800;
+          camera.lookAt(physicalAirplane.position);
+
+          physicalAirplane.add(camera);
+
+          physicalAirplane.rotation.x -= Math.PI/2;
+
+          scene.add( physicalAirplane );
         }, onProgress, onError);
 
       }, onProgress, onError);
@@ -148,11 +174,13 @@
       renderer = new THREE.WebGLRenderer();
       renderer.setPixelRatio( window.devicePixelRatio );
       renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.shadowMap.enabled = true
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
       container.appendChild( renderer.domElement );
 
-      document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-
-      //
+      document.addEventListener("keydown", onKey);
+      document.addEventListener("keyup", onKey);
 
       window.addEventListener( 'resize', onWindowResize, false );
 
@@ -170,32 +198,140 @@
 
     }
 
-    function onDocumentMouseMove( event ) {
+    let keyMap = {};
 
-      mouseX = ( event.clientX - windowHalfX ) / 2;
-      mouseY = ( event.clientY - windowHalfY ) / 2;
-
+    function onKey(e) {
+      keyMap[e.key] = e.type === 'keydown';
     }
 
-    //
-
     function animate() {
+      if(physicalAirplane) {
+        camera.rotation.z = physicalAirplane.rotation.y
+        airplaneInfo.flying = (physicalAirplane._physijs.touches.length === 0)
+        let rotation = airplaneRotation()
+        let linearSpeed = airplaneLinearSpeed()
+        let angularSpeed = airplaneAngularSpeed()
+
+        if(airplaneInfo.flying) {
+          if (keyMap['w']) {
+            console.log(new THREE.Vector3(0, 150000, 0).applyMatrix4(rotation))
+            physicalAirplane.applyCentralImpulse(
+                    new THREE.Vector3(0, 150000, 0).applyMatrix4(rotation)
+            )
+          }
+
+          if (keyMap['s']) {
+            physicalAirplane.applyCentralImpulse(
+                    new THREE.Vector3(0, -50000, 0).applyMatrix4(rotation)
+            )
+          }
+
+          if(keyMap['ArrowUp']) {
+            // if(angularSpeed < 0.2)
+              noseDown()
+          }
+          if(keyMap['ArrowDown']) {
+            // if(angularSpeed < 0.2)
+              noseUp()
+          }
+          if(keyMap['ArrowLeft']) {
+            physicalAirplane.applyImpulse(
+                    new THREE.Vector3(0, -10000, 0),
+                    new THREE.Vector3(-1000, 0, 0).applyMatrix4(rotation)
+            )
+          }
+          if(keyMap['ArrowRight']) {
+            physicalAirplane.applyImpulse(
+                    new THREE.Vector3(0, -10000, 0),
+                    new THREE.Vector3(1000, 0, 0).applyMatrix4(rotation)
+            )
+          }
+
+        } else {
+          physicalAirplane._physijs.linearVelocity.set(new THREE.Vector3(0,0,0))
+          if (keyMap['w']) {
+            if (!keyMap['ArrowLeft'] && !keyMap['ArrowRight']){
+              airplaneInfo.steering -= 0.1 * airplaneInfo.steering
+            }
+            physicalAirplane.applyCentralImpulse(
+                    new THREE.Vector3(0, 150000, 0).applyMatrix4(rotation).multiply(new THREE.Vector3(1, 10, 1))
+            )
+            if(angularSpeed < 0.5) {
+              physicalAirplane.applyImpulse(
+                      new THREE.Vector3(0, -50000, 0).applyMatrix4(new THREE.Matrix4().makeRotationZ(airplaneInfo.steering)).applyMatrix4(rotation),
+                      new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
+              )
+            }
+          }
+          if (keyMap['s']) {
+            if (!keyMap['ArrowLeft'] && !keyMap['ArrowRight']){
+              airplaneInfo.steering -= 0.1 * airplaneInfo.steering
+            }
+            physicalAirplane.applyCentralImpulse(
+                    new THREE.Vector3(0, -50000, 0)
+                            .applyMatrix4(rotation)
+                            .applyMatrix4(new THREE.Matrix4().makeRotationZ(airplaneInfo.steering))
+            )
+            if(angularSpeed < 0.5) {
+              physicalAirplane.applyImpulse(
+                      new THREE.Vector3(50000 * Math.sin(airplaneInfo.steering), 0, 0).applyMatrix4(rotation),
+                      new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
+              )
+            }
+          }
+          if(keyMap['ArrowDown']) {
+            if(linearSpeed > 800)
+              noseUpGround()
+          }
+          if (keyMap['ArrowLeft']) {
+            airplaneInfo.steering -= 0.01
+            if (airplaneInfo.steering < -0.5) airplaneInfo.steering = -1
+          }
+          if (keyMap['ArrowRight']) {
+            airplaneInfo.steering += 0.01
+            if (airplaneInfo.steering > 0.5) airplaneInfo.steering = 1
+          }
+        }
+      }
 
       requestAnimationFrame( animate );
       render();
-
     }
 
     function render() {
 
-      camera.position.x += ( mouseX - camera.position.x ) * .05;
-      camera.position.y += 10 + ( - mouseY - camera.position.y ) * .05;
-
-      camera.lookAt(0, 100, 0);
-
       renderer.render( scene, camera );
 
     }
+
+    function noseUp() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(0, 0, 5000).applyMatrix4(rotation),
+              new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
+      )
+    }
+
+    function noseUpGround() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(0, 0, 20000).applyMatrix4(rotation),
+              new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
+      )
+    }
+
+    function noseDown() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(0, 0, -50000).applyMatrix4(rotation),
+              new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
+      )
+    }
+
+
+    let airplaneRotation = () => new THREE.Matrix4().extractRotation(physicalAirplane.matrix)
+    let airplaneLinearSpeed = () => physicalAirplane._physijs.linearVelocity.length()
+    let airplaneAngularSpeed = () => physicalAirplane._physijs.angularVelocity.length()
   </script>
 </body>
 </html>

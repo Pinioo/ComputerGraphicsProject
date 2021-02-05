@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1613eaea-ec69-46f0-92e1-6603ccfa1a31" name="Default Changelist" comment="" />
+    <list default="true" id="1613eaea-ec69-46f0-92e1-6603ccfa1a31" name="Default Changelist" comment="Added skybox, flight is weird but available">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/back.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/bottom.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/front.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/left.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/right.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/road.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/skybox.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/tex.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/top.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flight.html" beforeDir="false" afterPath="$PROJECT_DIR$/flight.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -15,7 +28,11 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="ProjectId" id="1lxilQQuuiZsKG3laDOdV02Ay6X" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -24,8 +41,9 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Lab05_Fizyka1" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Lab07_Shaders1_Angel_enhanced" />
     <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
@@ -47,11 +65,36 @@
       <workItem from="1608545296144" duration="1228000" />
       <workItem from="1608546584447" duration="3825000" />
       <workItem from="1608796987747" duration="2940000" />
-      <workItem from="1609530482892" duration="6508000" />
+      <workItem from="1609530482892" duration="6834000" />
+      <workItem from="1609590395591" duration="3494000" />
+      <workItem from="1609773404819" duration="4760000" />
+      <workItem from="1609783136310" duration="3247000" />
+      <workItem from="1610015725732" duration="9000" />
+      <workItem from="1610391959512" duration="10270000" />
+      <workItem from="1610660264565" duration="9541000" />
+      <workItem from="1611054544601" duration="15818000" />
+      <workItem from="1611236812129" duration="23000" />
+      <workItem from="1612528822336" duration="395000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added skybox, flight is weird but available" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added skybox, flight is weird but available" />
   </component>
 </project>
