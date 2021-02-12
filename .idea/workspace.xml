@@ -2,16 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1613eaea-ec69-46f0-92e1-6603ccfa1a31" name="Default Changelist" comment="Added skybox, flight is weird but available">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/back.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/bottom.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/front.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/left.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/right.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/road.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/skybox.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/tex.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/top.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/flight.html" beforeDir="false" afterPath="$PROJECT_DIR$/flight.html" afterDir="false" />
     </list>
@@ -74,8 +64,18 @@
       <workItem from="1610660264565" duration="9541000" />
       <workItem from="1611054544601" duration="15818000" />
       <workItem from="1611236812129" duration="23000" />
-      <workItem from="1612528822336" duration="395000" />
+      <workItem from="1612528822336" duration="4410000" />
+      <workItem from="1612997363212" duration="1231000" />
+      <workItem from="1613129300074" duration="7072000" />
     </task>
+    <task id="LOCAL-00001" summary="Added skybox, flight is weird but available">
+      <created>1612529270862</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1612529270862</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -13,50 +13,52 @@
   <script src="./MTLLoader.js"></script>
   <script src="./physi.js"></script>
   <script>
-    let container;
+    let container
 
-    let clock;
+    let clock
 
-    let camera, scene, renderer;
+    let camera, scene, renderer
 
-    let windowHalfX = window.innerWidth / 2;
-    let windowHalfY = window.innerHeight / 2;
+    let windowHalfX = window.innerWidth / 2
+    let windowHalfY = window.innerHeight / 2
 
-    let plane, skybox
+    let planes = {}
+    let heights = {}
     let physicalAirplane, wings
+    const planeGeom = new THREE.PlaneGeometry(4000, 4000)
 
     let airplaneInfo = {
       flying: false,
       steering: 0
     }
 
-    init();
-    scene.simulate(undefined, 2);
-    animate();
+    init()
+    scene.simulate(undefined, 2)
+    animate()
 
 
     function init() {
-      clock = new THREE.Clock();
+      clock = new THREE.Clock()
 
-      Physijs.scripts.worker = './physijs_worker.js';
-      Physijs.scripts.ammo = './ammo.js';
+      Physijs.scripts.worker = './physijs_worker.js'
+      Physijs.scripts.ammo = './ammo.js'
 
-      container = document.createElement( 'div' );
-      document.body.appendChild( container );
+      container = document.createElement( 'div' )
+      document.body.appendChild( container )
 
-      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 40000 );
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 40000 )
       // scene
 
-      scene = new Physijs.Scene();
-      scene.setGravity(new THREE.Vector3( 0, -100, 0 ));
+      scene = new Physijs.Scene()
+      scene.setGravity(new THREE.Vector3( 0, -100, 0 ))
       scene.addEventListener('update', function() {
-        scene.simulate(undefined, 2);
-      });
+        scene.simulate(undefined, 2)
+      })
 
-      const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 );
-      scene.add( ambientLight );
+      const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 )
+      scene.add( ambientLight )
 
-      const directLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      const directLight = new THREE.DirectionalLight(0xffffff, 0.5)
       directLight.position.set(0, 3000, 0)
       directLight.lookAt(scene.position)
       directLight.shadow.camera.far = 50000
@@ -70,45 +72,39 @@
 
       //// PLANE
 
-      const planeGeom = new THREE.PlaneGeometry(2000, 40000)
       const planeTexture = new THREE.TextureLoader().setPath("./models/").load("road.png")
-      planeTexture.repeat = new THREE.Vector2(1, 20)
-      planeTexture.wrapT = true
-      plane = new Physijs.PlaneMesh(
-              planeGeom,
-              Physijs.createMaterial(
-                      new THREE.MeshPhongMaterial({
-                        map: planeTexture
-                      }),
-                      .8,
-                      .001
-              ),
-              0
-      );
-      plane.receiveShadow = true
 
-      plane.rotation.x = -Math.PI / 2;
-      plane.position.y = -1000
-      plane.position.z = -17000
-
-      scene.add(plane)
+      for (let i of Array(20).keys()){
+        const plane = new Physijs.PlaneMesh(
+                planeGeom,
+                Physijs.createMaterial(
+                        new THREE.MeshPhongMaterial({
+                          map: planeTexture
+                        }),
+                        .8,
+                        .001
+                ),
+                0
+        )
+        addChunk(0, -i, plane)
+      }
 
       // manager
 
-      const objManager = new THREE.LoadingManager( loadModel );
-      const mtlManager = new THREE.LoadingManager( loadModel );
+      const objManager = new THREE.LoadingManager( loadModel )
+      const mtlManager = new THREE.LoadingManager( loadModel )
 
       objManager.onProgress = function ( item, loaded, total ) {
 
-        console.log( item, loaded, total );
+        console.log( item, loaded, total )
 
-      };
+      }
 
       mtlManager.onProgress = function ( item, loaded, total ) {
 
-        console.log( item, loaded, total );
+        console.log( item, loaded, total )
 
-      };
+      }
 
       function loadModel() {}
 
@@ -116,15 +112,15 @@
 
       function onError() {}
 
-      var mtlLoader = new THREE.MTLLoader(mtlManager);
-      mtlLoader.setPath('./models/');
+      var mtlLoader = new THREE.MTLLoader(mtlManager)
+      mtlLoader.setPath('./models/')
       mtlLoader.load('airplane.mtl', function (materials) {
 
-        materials.preload();
+        materials.preload()
 
-        var objLoader = new THREE.OBJLoader(objManager);
-        objLoader.setMaterials(materials);
-        objLoader.setPath('./models/');
+        var objLoader = new THREE.OBJLoader(objManager)
+        objLoader.setMaterials(materials)
+        objLoader.setPath('./models/')
         objLoader.load('airplane.obj', function (object) {
           var a = object.children[0].geometry
           a.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, -350))
@@ -153,103 +149,127 @@
                   1000
           )
 
-          physicalAirplane.add(wings);
+          physicalAirplane.add(wings)
 
-          camera.position.x = physicalAirplane.position.x;
-          camera.position.y = physicalAirplane.position.y - 3000;
-          camera.position.z = physicalAirplane.position.z + 800;
-          camera.lookAt(physicalAirplane.position);
+          camera.position.x = physicalAirplane.position.x
+          camera.position.y = physicalAirplane.position.y - 3000
+          camera.position.z = physicalAirplane.position.z + 800
+          camera.lookAt(physicalAirplane.position)
 
-          physicalAirplane.add(camera);
+          physicalAirplane.add(camera)
 
-          physicalAirplane.rotation.x -= Math.PI/2;
+          physicalAirplane.rotation.x -= Math.PI/2
+          physicalAirplane.position.set(0, 500, 0)
 
-          scene.add( physicalAirplane );
-        }, onProgress, onError);
+          scene.add( physicalAirplane )
+        }, onProgress, onError)
 
-      }, onProgress, onError);
+      }, onProgress, onError)
 
       //
 
-      renderer = new THREE.WebGLRenderer();
-      renderer.setPixelRatio( window.devicePixelRatio );
-      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer = new THREE.WebGLRenderer()
+      renderer.setPixelRatio( window.devicePixelRatio )
+      renderer.setSize( window.innerWidth, window.innerHeight )
       renderer.shadowMap.enabled = true
       renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-      container.appendChild( renderer.domElement );
+      container.appendChild( renderer.domElement )
 
-      document.addEventListener("keydown", onKey);
-      document.addEventListener("keyup", onKey);
+      document.addEventListener("keydown", onKey)
+      document.addEventListener("keyup", onKey)
 
-      window.addEventListener( 'resize', onWindowResize, false );
+      window.addEventListener( 'resize', onWindowResize, false )
 
     }
 
     function onWindowResize() {
 
-      windowHalfX = window.innerWidth / 2;
-      windowHalfY = window.innerHeight / 2;
+      windowHalfX = window.innerWidth / 2
+      windowHalfY = window.innerHeight / 2
 
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+      camera.aspect = window.innerWidth / window.innerHeight
+      camera.updateProjectionMatrix()
 
-      renderer.setSize( window.innerWidth, window.innerHeight );
+      renderer.setSize( window.innerWidth, window.innerHeight )
 
     }
 
-    let keyMap = {};
+    let keyMap = {}
 
     function onKey(e) {
-      keyMap[e.key] = e.type === 'keydown';
+      keyMap[e.key] = e.type === 'keydown'
     }
 
     function animate() {
       if(physicalAirplane) {
-        camera.rotation.z = physicalAirplane.rotation.y
+        let chunkX = Math.round(physicalAirplane.position.x / 4000)
+        let chunkZ = Math.round(physicalAirplane.position.z / 4000)
+
+        for (let x of [chunkX -2, chunkX - 1, chunkX, chunkX + 1, chunkX + 2])
+          for (let z of [chunkZ - 2, chunkZ - 1, chunkZ, chunkZ + 1, chunkZ + 2])
+            if (!planes[x] || !planes[x][z])
+              addChunk(x, z)
+
         airplaneInfo.flying = (physicalAirplane._physijs.touches.length === 0)
         let rotation = airplaneRotation()
         let linearSpeed = airplaneLinearSpeed()
         let angularSpeed = airplaneAngularSpeed()
 
+        if (linearSpeed > 500)
+          physicalAirplane.setLinearVelocity(
+                  physicalAirplane.getLinearVelocity()
+                          .applyMatrix4(rotation.transpose())
+                          .multiply(new THREE.Vector3(0, 1, 1))
+                          .applyMatrix4(rotation.transpose())
+          )
+
+        physicalAirplane.applyCentralImpulse(
+                new THREE.Vector3(0, -linearSpeed, linearSpeed).applyMatrix4(rotation)
+        )
+
+        let sideForce = new THREE.Vector3(0, 0, 20*linearSpeed).applyMatrix4(rotation).multiply(new THREE.Vector3(1, 0, 1))
+        physicalAirplane.applyCentralImpulse(sideForce)
+
+        physicalAirplane.applyImpulse(
+                new THREE.Vector3(0, 0, linearSpeed).applyMatrix4(rotation).multiply(new THREE.Vector3(1, 0, 1)),
+                new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
+        )
+
         if(airplaneInfo.flying) {
-          if (keyMap['w']) {
-            console.log(new THREE.Vector3(0, 150000, 0).applyMatrix4(rotation))
+          if (keyMap['w'] && linearSpeed < 5000) {
             physicalAirplane.applyCentralImpulse(
                     new THREE.Vector3(0, 150000, 0).applyMatrix4(rotation)
             )
           }
 
-          if (keyMap['s']) {
+          if (keyMap['s'] && linearSpeed < 5000) {
             physicalAirplane.applyCentralImpulse(
                     new THREE.Vector3(0, -50000, 0).applyMatrix4(rotation)
             )
           }
 
           if(keyMap['ArrowUp']) {
-            // if(angularSpeed < 0.2)
               noseDown()
           }
           if(keyMap['ArrowDown']) {
-            // if(angularSpeed < 0.2)
               noseUp()
           }
           if(keyMap['ArrowLeft']) {
             physicalAirplane.applyImpulse(
-                    new THREE.Vector3(0, -10000, 0),
+                    new THREE.Vector3(0, 0, -10000).applyMatrix4(rotation),
                     new THREE.Vector3(-1000, 0, 0).applyMatrix4(rotation)
             )
           }
           if(keyMap['ArrowRight']) {
             physicalAirplane.applyImpulse(
-                    new THREE.Vector3(0, -10000, 0),
+                    new THREE.Vector3(0, 0, -10000).applyMatrix4(rotation),
                     new THREE.Vector3(1000, 0, 0).applyMatrix4(rotation)
             )
           }
 
         } else {
-          physicalAirplane._physijs.linearVelocity.set(new THREE.Vector3(0,0,0))
-          if (keyMap['w']) {
+          if (keyMap['w'] && linearSpeed < 5000) {
             if (!keyMap['ArrowLeft'] && !keyMap['ArrowRight']){
               airplaneInfo.steering -= 0.1 * airplaneInfo.steering
             }
@@ -263,7 +283,7 @@
               )
             }
           }
-          if (keyMap['s']) {
+          if (keyMap['s'] && linearSpeed < 5000) {
             if (!keyMap['ArrowLeft'] && !keyMap['ArrowRight']){
               airplaneInfo.steering -= 0.1 * airplaneInfo.steering
             }
@@ -280,7 +300,7 @@
             }
           }
           if(keyMap['ArrowDown']) {
-            if(linearSpeed > 800)
+            if(linearSpeed > 1500)
               noseUpGround()
           }
           if (keyMap['ArrowLeft']) {
@@ -294,13 +314,13 @@
         }
       }
 
-      requestAnimationFrame( animate );
-      render();
+      requestAnimationFrame( animate )
+      render()
     }
 
     function render() {
 
-      renderer.render( scene, camera );
+      renderer.render( scene, camera )
 
     }
 
@@ -323,14 +343,36 @@
     function noseDown() {
       let rotation = airplaneRotation()
       physicalAirplane.applyImpulse(
-              new THREE.Vector3(0, 0, -50000).applyMatrix4(rotation),
+              new THREE.Vector3(0, 0, -15000).applyMatrix4(rotation),
               new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
       )
     }
 
+    function addChunk(x, z, pl) {
+      if (!planes[x])
+        planes[x] = {}
+      let newPlane
+      if (pl)
+         newPlane = pl
+      else
+        newPlane = new Physijs.PlaneMesh(
+              planeGeom,
+              Physijs.createMaterial(
+                      new THREE.MeshPhongMaterial({color: 0x00ff00}),
+                      0.5,
+                      0.01
+              ),
+              0
+        )
+      newPlane.rotation.x = -Math.PI / 2
+      newPlane.position.set(x * 4000, 0, z * 4000)
+      newPlane.receiveShadow = true
+      planes[x][z] = newPlane
+      scene.add(newPlane)
+    }
 
     let airplaneRotation = () => new THREE.Matrix4().extractRotation(physicalAirplane.matrix)
-    let airplaneLinearSpeed = () => physicalAirplane._physijs.linearVelocity.length()
+    let airplaneLinearSpeed = () => new THREE.Vector2(physicalAirplane._physijs.linearVelocity.x, physicalAirplane._physijs.linearVelocity.z).length()
     let airplaneAngularSpeed = () => physicalAirplane._physijs.angularVelocity.length()
   </script>
 </body>
