@@ -8,10 +8,10 @@
   
   <div class="viewport"></div>
 
-  <script src="./three.min.js"></script>
-  <script src="./OBJLoader.js"></script>
-  <script src="./MTLLoader.js"></script>
-  <script src="./physi.js"></script>
+  <script src="libs/three.min.js"></script>
+  <script src="libs/OBJLoader.js"></script>
+  <script src="libs/MTLLoader.js"></script>
+  <script src="libs/physi.js"></script>
   <script>
     let container
 
@@ -24,37 +24,42 @@
 
     let planes = {}
     let heights = {}
+    const heightsWidth = 20
     let physicalAirplane, wings
     const planeGeom = new THREE.PlaneGeometry(4000, 4000)
 
     let airplaneInfo = {
       flying: false,
-      steering: 0
+      steering: 0,
+      cameraChangeComplete: true,
+      cameraFirstPerson: false
     }
 
     init()
+    // Simulation start
     scene.simulate(undefined, 2)
     animate()
-
 
     function init() {
       clock = new THREE.Clock()
 
-      Physijs.scripts.worker = './physijs_worker.js'
+      Physijs.scripts.worker = './libs/physijs_worker.js'
       Physijs.scripts.ammo = './ammo.js'
 
       container = document.createElement( 'div' )
       document.body.appendChild( container )
 
-      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 40000 )
-      // scene
+      //// CAMERA INIT
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 20000 )
 
+      //// SCENE SETUP
       scene = new Physijs.Scene()
       scene.setGravity(new THREE.Vector3( 0, -100, 0 ))
       scene.addEventListener('update', function() {
         scene.simulate(undefined, 2)
       })
 
+      //// LIGHTS SETUP
       const ambientLight = new THREE.AmbientLight( 0xcccccc, 0.4 )
       scene.add( ambientLight )
 
@@ -64,16 +69,18 @@
       directLight.shadow.camera.far = 50000
       scene.add(directLight)
 
+      //// SKYBOX
       scene.background = new THREE.CubeTextureLoader()
               .setPath('./models/')
               .load(["right.png", "left.png", "top.png", "bottom.png", "front.png", "back.png"])
 
+      //// FOG
       scene.fog = new THREE.Fog(0xaaaaaa, 100, 20000)
 
-      //// PLANE
-
+      //// LANE TEXTURE
       const planeTexture = new THREE.TextureLoader().setPath("./models/").load("road.png")
 
+      //// STARTING LANE
       for (let i of Array(20).keys()){
         const plane = new Physijs.PlaneMesh(
                 planeGeom,
@@ -89,43 +96,48 @@
         addChunk(0, -i, plane)
       }
 
-      // manager
-
-      const objManager = new THREE.LoadingManager( loadModel )
-      const mtlManager = new THREE.LoadingManager( loadModel )
-
-      objManager.onProgress = function ( item, loaded, total ) {
-
-        console.log( item, loaded, total )
-
+      //// LANDING LANE
+      for (let i of Array(20).keys()){
+        const plane = new Physijs.PlaneMesh(
+                planeGeom,
+                Physijs.createMaterial(
+                        new THREE.MeshPhongMaterial({
+                          map: planeTexture
+                        }),
+                        .8,
+                        .001
+                ),
+                0
+        )
+        addChunk(0, -i-40, plane)
       }
 
-      mtlManager.onProgress = function ( item, loaded, total ) {
+      //// OBJ and MTL LoadingManagers
+      const objManager = new THREE.LoadingManager(loadModel)
+      const mtlManager = new THREE.LoadingManager(loadModel)
 
-        console.log( item, loaded, total )
-
-      }
+      objManager.onProgress = mtlManager.onProgress = (item, loaded, total) => console.log(item, loaded, total)
 
       function loadModel() {}
-
-      function onProgress( xhr ) {}
-
+      function onProgress(xhr) {}
       function onError() {}
 
-      var mtlLoader = new THREE.MTLLoader(mtlManager)
+      let mtlLoader = new THREE.MTLLoader(mtlManager)
       mtlLoader.setPath('./models/')
+
+      // Load .mtl
       mtlLoader.load('airplane.mtl', function (materials) {
-
         materials.preload()
-
-        var objLoader = new THREE.OBJLoader(objManager)
+        let objLoader = new THREE.OBJLoader(objManager)
         objLoader.setMaterials(materials)
         objLoader.setPath('./models/')
+
+        // Load .obj
         objLoader.load('airplane.obj', function (object) {
-          var a = object.children[0].geometry
+          let a = object.children[0].geometry
           a.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, -350))
 
-          var w = object.children[1].geometry
+          let w = object.children[1].geometry
           w.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, -350))
 
           physicalAirplane = new Physijs.BoxMesh(
@@ -149,8 +161,10 @@
                   1000
           )
 
+          // Assembling airplane
           physicalAirplane.add(wings)
 
+          // Setting camera to third person
           camera.position.x = physicalAirplane.position.x
           camera.position.y = physicalAirplane.position.y - 3000
           camera.position.z = physicalAirplane.position.z + 800
@@ -166,8 +180,7 @@
 
       }, onProgress, onError)
 
-      //
-
+      //// RENDERER SETUP
       renderer = new THREE.WebGLRenderer()
       renderer.setPixelRatio( window.devicePixelRatio )
       renderer.setSize( window.innerWidth, window.innerHeight )
@@ -179,12 +192,10 @@
       document.addEventListener("keydown", onKey)
       document.addEventListener("keyup", onKey)
 
-      window.addEventListener( 'resize', onWindowResize, false )
-
+      window.addEventListener("resize", onWindowResize, false)
     }
 
     function onWindowResize() {
-
       windowHalfX = window.innerWidth / 2
       windowHalfY = window.innerHeight / 2
 
@@ -192,9 +203,9 @@
       camera.updateProjectionMatrix()
 
       renderer.setSize( window.innerWidth, window.innerHeight )
-
     }
 
+    // keyMap says weather the key is being pressed
     let keyMap = {}
 
     function onKey(e) {
@@ -203,19 +214,23 @@
 
     function animate() {
       if(physicalAirplane) {
+        // Check in which chunk the airplane is
         let chunkX = Math.round(physicalAirplane.position.x / 4000)
         let chunkZ = Math.round(physicalAirplane.position.z / 4000)
 
-        for (let x of [chunkX -2, chunkX - 1, chunkX, chunkX + 1, chunkX + 2])
-          for (let z of [chunkZ - 2, chunkZ - 1, chunkZ, chunkZ + 1, chunkZ + 2])
+        // Add missing chunks
+        for (let x = chunkX - 5; x <= chunkX + 5; x++)
+          for (let z = chunkZ - 5; z <= chunkZ + 5; z++)
             if (!planes[x] || !planes[x][z])
               addChunk(x, z)
 
+        // Get current info about airplane
         airplaneInfo.flying = (physicalAirplane._physijs.touches.length === 0)
         let rotation = airplaneRotation()
         let linearSpeed = airplaneLinearSpeed()
         let angularSpeed = airplaneAngularSpeed()
 
+        // Get rid of airplane's side velocity
         if (linearSpeed > 500)
           physicalAirplane.setLinearVelocity(
                   physicalAirplane.getLinearVelocity()
@@ -224,51 +239,55 @@
                           .applyMatrix4(rotation.transpose())
           )
 
+        // Air resistance
         physicalAirplane.applyCentralImpulse(
-                new THREE.Vector3(0, -linearSpeed, linearSpeed).applyMatrix4(rotation)
+                new THREE.Vector3(0, -linearSpeed, 0).applyMatrix4(rotation)
         )
 
-        let sideForce = new THREE.Vector3(0, 0, 20*linearSpeed).applyMatrix4(rotation).multiply(new THREE.Vector3(1, 0, 1))
+        // Forces which drag the airplane when it's tilted
+        let sideForce = new THREE.Vector3(0, 0, 10*linearSpeed).applyMatrix4(rotation).multiply(new THREE.Vector3(1, 0, 1))
         physicalAirplane.applyCentralImpulse(sideForce)
-
         physicalAirplane.applyImpulse(
                 new THREE.Vector3(0, 0, linearSpeed).applyMatrix4(rotation).multiply(new THREE.Vector3(1, 0, 1)),
                 new THREE.Vector3(0, 1000, 0).applyMatrix4(rotation)
         )
 
-        if(airplaneInfo.flying) {
-          if (keyMap['w'] && linearSpeed < 5000) {
-            physicalAirplane.applyCentralImpulse(
-                    new THREE.Vector3(0, 150000, 0).applyMatrix4(rotation)
-            )
+        // Camera change
+        if (keyMap['c']) {
+          if (airplaneInfo.cameraChangeComplete) {
+            if (airplaneInfo.cameraFirstPerson) {
+              airplaneInfo.cameraFirstPerson = false
+              camera.position.set(0, -3000, 800)
+              camera.lookAt(physicalAirplane.position)
+            } else {
+              airplaneInfo.cameraFirstPerson = true
+              camera.position.set(0, 500, 200)
+            }
+            airplaneInfo.cameraChangeComplete = false
           }
+        }
+        else{
+          airplaneInfo.cameraChangeComplete = true
+        }
 
-          if (keyMap['s'] && linearSpeed < 5000) {
-            physicalAirplane.applyCentralImpulse(
-                    new THREE.Vector3(0, -50000, 0).applyMatrix4(rotation)
-            )
-          }
-
-          if(keyMap['ArrowUp']) {
-              noseDown()
-          }
-          if(keyMap['ArrowDown']) {
-              noseUp()
-          }
-          if(keyMap['ArrowLeft']) {
-            physicalAirplane.applyImpulse(
-                    new THREE.Vector3(0, 0, -10000).applyMatrix4(rotation),
-                    new THREE.Vector3(-1000, 0, 0).applyMatrix4(rotation)
-            )
-          }
-          if(keyMap['ArrowRight']) {
-            physicalAirplane.applyImpulse(
-                    new THREE.Vector3(0, 0, -10000).applyMatrix4(rotation),
-                    new THREE.Vector3(1000, 0, 0).applyMatrix4(rotation)
-            )
-          }
-
-        } else {
+        if(airplaneInfo.flying) { // Steering reaction when airplane in the air
+          if (keyMap['w'] && linearSpeed < 5000)
+            airThrottle()
+          if (keyMap['s'])
+            airBrake()
+          if(keyMap['ArrowUp'])
+            noseDown()
+          if(keyMap['ArrowDown'])
+            noseUp()
+          if(keyMap[','])
+            turnLeft()
+          if(keyMap['.'])
+            turnRight()
+          if(keyMap['ArrowLeft'])
+            bankLeft()
+          if(keyMap['ArrowRight'])
+            bankRight()
+        } else { // Steering reaction when airplane on the ground
           if (keyMap['w'] && linearSpeed < 5000) {
             if (!keyMap['ArrowLeft'] && !keyMap['ArrowRight']){
               airplaneInfo.steering -= 0.1 * airplaneInfo.steering
@@ -305,11 +324,11 @@
           }
           if (keyMap['ArrowLeft']) {
             airplaneInfo.steering -= 0.01
-            if (airplaneInfo.steering < -0.5) airplaneInfo.steering = -1
+            if (airplaneInfo.steering < -0.2) airplaneInfo.steering = -1
           }
           if (keyMap['ArrowRight']) {
             airplaneInfo.steering += 0.01
-            if (airplaneInfo.steering > 0.5) airplaneInfo.steering = 1
+            if (airplaneInfo.steering > 0.2) airplaneInfo.steering = 1
           }
         }
       }
@@ -319,9 +338,21 @@
     }
 
     function render() {
+      renderer.render(scene, camera)
+    }
 
-      renderer.render( scene, camera )
+    function airThrottle() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyCentralImpulse(
+              new THREE.Vector3(0, 200000, 0).applyMatrix4(rotation)
+      )
+    }
 
+    function airBrake() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyCentralImpulse(
+              new THREE.Vector3(0, -400000, 0).applyMatrix4(rotation)
+      )
     }
 
     function noseUp() {
@@ -348,32 +379,117 @@
       )
     }
 
+    function bankLeft() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(0, 0, -30000).applyMatrix4(rotation),
+              new THREE.Vector3(-1000, 0, 0).applyMatrix4(rotation)
+      )
+    }
+
+    function bankRight() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(0, 0, -30000).applyMatrix4(rotation),
+              new THREE.Vector3(1000, 0, 0).applyMatrix4(rotation)
+      )
+    }
+
+    function turnLeft() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(10000, 0, 0).applyMatrix4(rotation),
+              new THREE.Vector3(0, -1000, 0).applyMatrix4(rotation),
+      )
+    }
+
+    function turnRight() {
+      let rotation = airplaneRotation()
+      physicalAirplane.applyImpulse(
+              new THREE.Vector3(-10000, 0, 0).applyMatrix4(rotation),
+              new THREE.Vector3(0, -1000, 0).applyMatrix4(rotation),
+      )
+    }
+
+    // Function which adds lacking chunks
+    // if pl is defined   => plane specified by pl
+    // if pl is undefined => random terrain
     function addChunk(x, z, pl) {
-      if (!planes[x])
+      if (!planes[x]) {
         planes[x] = {}
+        heights[x] = {}
+      }
       let newPlane
-      if (pl)
-         newPlane = pl
-      else
-        newPlane = new Physijs.PlaneMesh(
-              planeGeom,
-              Physijs.createMaterial(
-                      new THREE.MeshPhongMaterial({color: 0x00ff00}),
-                      0.5,
-                      0.01
-              ),
-              0
+      if (pl) {
+        newPlane = pl
+        heights[x][z] = {
+          top: Array(heightsWidth).fill(0),
+          bottom: Array(heightsWidth).fill(0),
+          left: Array(heightsWidth).fill(0),
+          right: Array(heightsWidth).fill(0),
+        }
+      }
+      else {
+        let heightGeom = new THREE.PlaneGeometry(4000, 4000, heightsWidth-1, heightsWidth-1)
+        for (let i = 0, l = heightGeom.vertices.length; i < l; i++) {
+          let vertex = heightGeom.vertices[i];
+          vertex.z += Math.random() * 1000;
+        }
+        if(heights[x][z+1])
+          for (let i = 0; i < heightsWidth; i++) {
+            let vertex = heightGeom.vertices[heightsWidth * (heightsWidth - 1) + i];
+            vertex.z = heights[x][z+1].top[i];
+          }
+        if(heights[x][z-1])
+          for (let i = 0; i < heightsWidth; i++) {
+            let vertex = heightGeom.vertices[i];
+            vertex.z = heights[x][z-1].bottom[i];
+          }
+        if(heights[x+1] && heights[x+1][z]){
+          for (let i = 0; i < heightsWidth; i++) {
+            let vertex = heightGeom.vertices[heightsWidth * (i + 1) - 1];
+            vertex.z = heights[x+1][z].left[i];
+          }
+        }
+        if(heights[x-1] && heights[x-1][z]){
+          for (let i = 0; i < heightsWidth; i++) {
+            let vertex = heightGeom.vertices[heightsWidth * i];
+            vertex.z = heights[x-1][z].right[i];
+          }
+        }
+        heights[x][z] = {
+          top: Array(heightsWidth),
+          bottom: Array(heightsWidth),
+          left: Array(heightsWidth),
+          right: Array(heightsWidth),
+        }
+        for (let i = 0; i < heightsWidth; i++) {
+          heights[x][z].top[i] = heightGeom.vertices[i].z;
+          heights[x][z].bottom[i] = heightGeom.vertices[heightsWidth * (heightsWidth - 1) + i].z;
+          heights[x][z].right[i] = heightGeom.vertices[heightsWidth * (i + 1) - 1].z;
+          heights[x][z].left[i] = heightGeom.vertices[heightsWidth * i].z;
+        }
+        newPlane = new Physijs.HeightfieldMesh(
+                heightGeom,
+                Physijs.createMaterial(
+                        new THREE.MeshPhongMaterial({color: 0x669933}),
+                        0.5,
+                        0.01
+                ),
+                0
         )
+      }
       newPlane.rotation.x = -Math.PI / 2
       newPlane.position.set(x * 4000, 0, z * 4000)
       newPlane.receiveShadow = true
+      newPlane.castShadow = true
       planes[x][z] = newPlane
       scene.add(newPlane)
     }
 
     let airplaneRotation = () => new THREE.Matrix4().extractRotation(physicalAirplane.matrix)
     let airplaneLinearSpeed = () => new THREE.Vector2(physicalAirplane._physijs.linearVelocity.x, physicalAirplane._physijs.linearVelocity.z).length()
-    let airplaneAngularSpeed = () => physicalAirplane._physijs.angularVelocity.length()
+    let airplaneAngularSpeed = () => physicalAirplane._physijs.angularVelocity.length
   </script>
 </body>
 </html>

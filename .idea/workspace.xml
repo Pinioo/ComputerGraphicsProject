@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="1613eaea-ec69-46f0-92e1-6603ccfa1a31" name="Default Changelist" comment="Added skybox, flight is weird but available">
+    <list default="true" id="1613eaea-ec69-46f0-92e1-6603ccfa1a31" name="Default Changelist" comment="No weird side force anymore">
+      <change afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MTLLoader.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/MTLLoader.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/OBJLoader.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/OBJLoader.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ammo.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/ammo.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/flight.html" beforeDir="false" afterPath="$PROJECT_DIR$/flight.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/tex.txt" beforeDir="false" afterPath="$PROJECT_DIR$/models/tex.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/physi.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/physi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/physijs_worker.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/physijs_worker.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/three.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/three.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/three.min.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/three.min.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/three.module.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/three.module.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tween.js" beforeDir="false" afterPath="$PROJECT_DIR$/libs/tween.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +52,7 @@
       <recent name="D:\Studia\Grafika\Projekt" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Studia\Grafika\Projekt\libs" />
       <recent name="D:\Studia\Grafika\Projekt" />
     </key>
   </component>
@@ -66,7 +78,9 @@
       <workItem from="1611236812129" duration="23000" />
       <workItem from="1612528822336" duration="4410000" />
       <workItem from="1612997363212" duration="1231000" />
-      <workItem from="1613129300074" duration="7072000" />
+      <workItem from="1613129300074" duration="13264000" />
+      <workItem from="1613168745638" duration="114000" />
+      <workItem from="1613311545393" duration="4187000" />
     </task>
     <task id="LOCAL-00001" summary="Added skybox, flight is weird but available">
       <created>1612529270862</created>
@@ -75,7 +89,14 @@
       <option name="project" value="LOCAL" />
       <updated>1612529270862</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="No weird side force anymore">
+      <created>1613136844865</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1613136844865</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -95,6 +116,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added skybox, flight is weird but available" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added skybox, flight is weird but available" />
+    <MESSAGE value="No weird side force anymore" />
+    <option name="LAST_COMMIT_MESSAGE" value="No weird side force anymore" />
   </component>
 </project>
